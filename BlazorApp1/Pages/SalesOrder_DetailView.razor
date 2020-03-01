@@ -1,0 +1,96 @@
+﻿@using DWNet.Data;
+@using SnapObjects.Data;
+@using Appeon.DataStoreDemo.SqlServer;
+@using System.Net.Http
+@inject HttpClient Http
+
+<h3>SalesOrder_DetailView</h3>
+<DxFormLayout Data="@DW_Master"
+              ItemUpdating="@((fieldName, newValue) => OnItemUpdating(fieldName, newValue))">
+
+    <DxFormLayoutItem Field="@nameof(D_Order_Header_Free.Salesorderid)" Caption="Id:" ColSpanMd="6" />
+
+    <DxFormLayoutItem Field="@nameof(D_Order_Header_Free.Customerid)" Caption="Customer:" ColSpanMd="6">
+        <Template>
+            <DxComboBox Data="@Customers" 
+                        TextFieldName="@nameof(D_Dddw_Customer_Individual.Person_Firstname)"
+                        SelectedItem="@(Customers.Where(c => c.Customer_Customerid == (int)((ValueEditingContext)context).Value).FirstOrDefault())"
+                        SelectedItemChanged="@(value => ((ValueEditingContext)context).OnChanged(value.Customer_Customerid))">
+            </DxComboBox>
+        </Template>
+    </DxFormLayoutItem>
+
+
+    <DxFormLayoutItem Field="@nameof(D_Order_Header_Free.Orderdate)" Caption="Order Date:" ColSpanMd="6" />
+
+    <DxFormLayoutItem Field="@nameof(D_Order_Header_Free.Duedate)" Caption="Due Date:" ColSpanMd="6" />
+</DxFormLayout>
+
+<DxDataGrid Data="@DW_Order_Details">
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Salesorderid)" Caption="Id" />
+    <DxDataGridComboBoxColumn Field="@nameof(D_Order_Detail_List.Productid)" 
+                              TextFieldName="@nameof(D_Dddw_Order_Production.Product_Name)"
+                              ValueFieldName="@nameof(D_Dddw_Order_Production.Product_Productid)"
+                              Caption="Product"
+                              Data="@Products" />
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Unitprice)" Caption="Unit Price" />
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Orderqty)" Caption="Order Qty" />
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Unitpricediscount)" Caption="Unit Price Discount" />
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Linetotal)" Caption="Line Total" />
+    <DxDataGridDateEditColumn Field="@nameof(D_Order_Detail_List.Modifieddate)" Caption="Modified Date" />
+
+    <DxDataGridCommandColumn />
+</DxDataGrid>
+
+<DxButton Click="@OnBackClick" Text="Back"/>
+
+@if (IsBusy)
+{
+    <p>Loading...</p>
+}
+
+@code {
+    [Parameter]
+    public D_Order_Header_Grid DW_Master { get; set; }
+
+    [Parameter]
+    public IDataStore<D_Dddw_Order_Production> Products { get; set; }
+
+    [Parameter]
+    public IDataStore<D_Dddw_Customer_Individual> Customers { get; set; }
+
+
+    IDataStore<D_Order_Detail_List> DW_Order_Details = new DataStore<D_Order_Detail_List>();
+    bool IsBusy;
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClickCallback { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsBusy = true;
+        StateHasChanged();
+
+        string salesOrderId = DW_Master.Salesorderid.ToString();
+        string customerId = DW_Master.Customerid.ToString();
+        var response = await Http.GetAsync($"http://localhost:16561/api/SalesOrder/RetrieveSaleOrderDetail/{salesOrderId}/{customerId}");
+        response.EnsureSuccessStatusCode();
+        string json = await response.Content.ReadAsStringAsync();
+        IDataUnpacker unPacker = new DataUnpacker(json, DataFormat.Json);
+        DW_Order_Details = new DataStore<D_Order_Detail_List>();
+        string json2 = unPacker.GetValue<string>("SalesOrderDetail");
+        DW_Order_Details.ImportJson(json2);
+
+        IsBusy = false;
+    }
+
+    void OnItemUpdating(string fieldName, object newValue)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    void OnBackClick(MouseEventArgs args)
+    {
+        OnClickCallback.InvokeAsync(args);
+    }
+}

@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\product.pbl\D_Order_Detail_List.cs" Link="Data\D_Order_Detail_List.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Dddw_Currency_Rate.cs" Link="Data\D_Dddw_Currency_Rate.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Dddw_Customer_Address.cs" Link="Data\D_Dddw_Customer_Address.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Dddw_Customer_Creditcard.cs" Link="Data\D_Dddw_Customer_Creditcard.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Dddw_Customer_Individual.cs" Link="Data\D_Dddw_Customer_Individual.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Dddw_Customer_Store.cs" Link="Data\D_Dddw_Customer_Store.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Dddw_Order_Production.cs" Link="Data\D_Dddw_Order_Production.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Dddw_Salesperson.cs" Link="Data\D_Dddw_Salesperson.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Dddw_Salesterritory.cs" Link="Data\D_Dddw_Salesterritory.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Dddw_Shipmethod.cs" Link="Data\D_Dddw_Shipmethod.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Dddw_Specialoffer.cs" Link="Data\D_Dddw_Specialoffer.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Order_Detail_Free.cs" Link="Data\D_Order_Detail_Free.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Order_Header_Free.cs" Link="Data\D_Order_Header_Free.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Order_Header_Grid.cs" Link="Data\D_Order_Header_Grid.cs" />
+    <Compile Include="..\Appeon.DataStoreDemo.SqlServer\salesdemo.pbw\salesdemo.pbt\salesorder.pbl\D_Salesorder_Select.cs" Link="Data\D_Salesorder_Select.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DevExpress.Blazor" Version="19.2.4" />
+    <PackageReference Include="DWNet.Data" Version="2.0.0-beta2" />
+    <PackageReference Include="SnapObjects.Data" Version="2.0.0-beta2" />
+  </ItemGroup>
+</Project>

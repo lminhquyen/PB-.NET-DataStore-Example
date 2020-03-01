@@ -1,0 +1,3 @@
+SET ASPNETCORE_ENVIRONMENT=Development
+SET ASPNETCORE_URLS=http://*:16561
+dotnet run
