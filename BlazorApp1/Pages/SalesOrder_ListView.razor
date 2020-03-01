@@ -6,90 +6,52 @@
 @using System.Net.Http
 @inject HttpClient Http
 
-@if (!Initialized)
+@if (Customers == null)
 {
     <p>Loading...</p>
-    return;
-}
-
-@if (listMode)
-{
-    <DxFormLayout Data="@Params" ItemUpdating="@((fieldName, newValue) => OnItemUpdating(fieldName, newValue))">
-
-        <DxFormLayoutItem Field="@nameof(D_Salesorder_Select.Date_From)" Caption="From:" ColSpanMd="6" />
-
-        <DxFormLayoutItem Field="@nameof(D_Salesorder_Select.Date_To)" Caption="To:" ColSpanMd="6" />
-
-        <DxFormLayoutItem Field="@nameof(D_Salesorder_Select.Customer)" Caption="Customer:" ColSpanMd="6">
-            <Template>
-                <DxComboBox Data="@Customers"
-                            TextFieldName="@nameof(D_Dddw_Customer_Individual.Person_Firstname)"
-                            SelectedItem="@GetCustomer(context)"
-                            SelectedItemChanged="@(value => ((ValueEditingContext)context).OnChanged(new Nullable<decimal>(value.Customer_Customerid)))">
-                </DxComboBox>
-            </Template>
-        </DxFormLayoutItem>
-    </DxFormLayout>
-
-    <button @onclick="@Filter">Filter</button>
-
-
-    <DxDataGrid Data="@Orders">
-        <DxDataGridColumn Field="@nameof(D_Order_Header_Grid.Salesorderid)" Caption="Id" />
-        <DxDataGridColumn Field="@nameof(D_Order_Header_Grid.Orderdate)" Caption="Order Date" />
-        <DxDataGridColumn Field="@nameof(D_Order_Header_Grid.Duedate)" Caption="Due Date" />
-        <DxDataGridColumn Field="@nameof(D_Order_Header_Grid.Shipdate)" Caption="Ship Date" />
-
-        <DxDataGridComboBoxColumn Data="@Customers"
-                                  Field="@nameof(D_Order_Header_Grid.Customerid)"
-                                  TextFieldName="@nameof(D_Dddw_Customer_Individual.Person_Firstname)"
-                                  ValueFieldName="@nameof(D_Dddw_Customer_Individual.Customer_Customerid)"
-                                  Caption="Customer"/>
-        <DxDataGridColumn Field="@nameof(D_Order_Header_Grid.Purchaseordernumber)" Caption="PO" />
-
-        <DxDataGridCommandColumn>
-            <CellTemplate>
-                <button type="submit" @onclick="@(() => { OnEditButtonClick(context); })">Edit</button>
-            </CellTemplate>
-        </DxDataGridCommandColumn>
-    </DxDataGrid>
-
-    @if (IsBusy)
-    {
-        <p>Loading...</p>
-    }
 }
 else
 {
-    <SalesOrder_DetailView Products="@Products" Customers="@Customers" DW_Master="@data" OnClickCallback="@OnBackClick" />
+    @if (listMode)
+    {
+        <D_SalesOrder_Select_View Params="@Params" Customers="@Customers" />
+
+        <button @onclick="@Filter">Filter</button>
+
+        @if (OrderLoading)
+        {
+            <p>Loading...</p>
+        }
+        else if (Orders != null)
+        {
+            <D_Order_Header_Grid_View Orders="@Orders" Customers="@Customers" EditCallback="@((row) => { data = row; listMode = !listMode; })" />
+        }
+    }
+    else
+    {
+        <SalesOrder_DetailView Products="@Products" Customers="@Customers" DW_Master="@data" OnClickCallback="@(() => listMode = !listMode)" />
+    }
 }
 
 
 @code {
 
-    bool IsBusy;
-    bool Initialized;
-
     public IDataStore<D_Dddw_Customer_Individual> Customers { get; set; }
-    IDataStore<D_Dddw_Order_Production> Products = new DataStore<D_Dddw_Order_Production>();
+    IDataStore<D_Dddw_Order_Production> Products;
 
-    IDataStore<D_Order_Header_Grid> Orders = new DataStore<D_Order_Header_Grid>();
+    IDataStore<D_Order_Header_Grid> Orders;
 
     D_Salesorder_Select Params { get; set; }
 
     bool listMode = true;
     D_Order_Header_Grid data;
-
-    void OnBackClick(MouseEventArgs args)
-    {
-        listMode = !listMode;
-    }
+    bool OrderLoading;
 
     protected override async Task OnInitializedAsync()
     {
         Params = new D_Salesorder_Select
         {
-            Date_From = new DateTime(2013, 1,1),
+            Date_From = new DateTime(2013, 1, 1),
             Date_To = new DateTime(2013, 12, 31),
             Customer = null
         };
@@ -106,13 +68,11 @@ else
         Products = new DataStore<D_Dddw_Order_Production>();
         json2 = unPacker.GetValue<string>("OrderProduct");
         Products.ImportJson(json2);
-
-        Initialized = true;
     }
 
     private async Task Filter(MouseEventArgs args)
     {
-        IsBusy = true;
+        OrderLoading = true;
         StateHasChanged();
 
         int id = Params.Customer.HasValue ? (int)Params.Customer.Value : 0;
@@ -128,37 +88,6 @@ else
         Orders = new DataStore<D_Order_Header_Grid>();
         Orders.ImportJson(json2);
 
-        IsBusy = false;
-    }
-
-    void OnEditButtonClick(object context)
-    {
-        this.data = context as D_Order_Header_Grid;
-        listMode = !listMode;
-    }
-
-    D_Dddw_Customer_Individual GetCustomer(object context)
-    {
-        if (Customers == null)
-            return null;
-
-        var result = Customers.Where(c => c.Customer_Customerid == Convert.ToInt32(((ValueEditingContext)context).Value)).FirstOrDefault();
-        return result;
-    }
-
-    void OnItemUpdating(string fieldName, object newValue)
-    {
-        switch (fieldName)
-        {
-            case nameof(D_Salesorder_Select.Customer):
-                Params.Customer = (decimal?)newValue;
-                break;
-            case nameof(D_Salesorder_Select.Date_From):
-                Params.Date_From = (DateTime?)newValue;
-                break;
-            case nameof(D_Salesorder_Select.Date_To):
-                Params.Date_To = (DateTime?)newValue;
-                break;
-        }
+        OrderLoading = false;
     }
 }

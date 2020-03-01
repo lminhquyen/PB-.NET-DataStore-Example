@@ -1,0 +1,37 @@
+﻿@using Appeon.DataStoreDemo.SqlServer;
+@using DWNet.Data;
+
+<DxDataGrid Data="@Orders">
+    <DxDataGridColumn Field="@nameof(D_Order_Header_Grid.Salesorderid)" Caption="Id" />
+    <DxDataGridColumn Field="@nameof(D_Order_Header_Grid.Orderdate)" Caption="Order Date" />
+    <DxDataGridColumn Field="@nameof(D_Order_Header_Grid.Duedate)" Caption="Due Date" />
+    <DxDataGridColumn Field="@nameof(D_Order_Header_Grid.Shipdate)" Caption="Ship Date" />
+
+    <DxDataGridComboBoxColumn Data="@Customers"
+                              Field="@nameof(D_Order_Header_Grid.Customerid)"
+                              TextFieldName="@nameof(D_Dddw_Customer_Individual.Person_Firstname)"
+                              ValueFieldName="@nameof(D_Dddw_Customer_Individual.Customer_Customerid)"
+                              Caption="Customer" />
+    <DxDataGridColumn Field="@nameof(D_Order_Header_Grid.Purchaseordernumber)" Caption="PO" />
+
+    <DxDataGridCommandColumn>
+        <CellTemplate>
+            <button type="submit" @onclick="@(() => { OnEditButtonClick(context); })">Edit</button>
+        </CellTemplate>
+    </DxDataGridCommandColumn>
+</DxDataGrid>
+
+@code {
+    [Parameter]
+    public IDataStore<D_Order_Header_Grid> Orders { get; set; }
+    [Parameter]
+    public IDataStore<D_Dddw_Customer_Individual> Customers { get; set; }
+    [Parameter]
+    public EventCallback<D_Order_Header_Grid> EditCallback { get; set; }
+
+    void OnEditButtonClick(object context)
+    {
+        var data = context as D_Order_Header_Grid;
+        EditCallback.InvokeAsync(data);
+    }
+}

@@ -1,0 +1,26 @@
+﻿@using Appeon.DataStoreDemo.SqlServer;
+@using DWNet.Data;
+
+<DxDataGrid Data="@DW_Order_Details">
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Salesorderid)" Caption="Id" />
+    <DxDataGridComboBoxColumn Field="@nameof(D_Order_Detail_List.Productid)"
+                              TextFieldName="@nameof(D_Dddw_Order_Production.Product_Name)"
+                              ValueFieldName="@nameof(D_Dddw_Order_Production.Product_Productid)"
+                              Caption="Product"
+                              Data="@Products" />
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Unitprice)" Caption="Unit Price" />
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Orderqty)" Caption="Order Qty" />
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Unitpricediscount)" Caption="Unit Price Discount" />
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Linetotal)" Caption="Line Total" />
+    <DxDataGridDateEditColumn Field="@nameof(D_Order_Detail_List.Modifieddate)" Caption="Modified Date" />
+
+    <DxDataGridCommandColumn />
+</DxDataGrid>
+
+@code {
+    [Parameter]
+    public IDataStore<D_Dddw_Order_Production> Products { get; set; }
+
+    [Parameter]
+    public IDataStore<D_Order_Detail_List> DW_Order_Details { get; set; }
+}

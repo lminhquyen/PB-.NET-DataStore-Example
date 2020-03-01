@@ -1,0 +1,51 @@
+﻿@using Appeon.DataStoreDemo.SqlServer;
+@using DWNet.Data;
+
+<DxFormLayout Data="@Params" ItemUpdating="@((fieldName, newValue) => OnItemUpdating(fieldName, newValue))">
+
+    <DxFormLayoutItem Field="@nameof(D_Salesorder_Select.Date_From)" Caption="From:" ColSpanMd="6" />
+
+    <DxFormLayoutItem Field="@nameof(D_Salesorder_Select.Date_To)" Caption="To:" ColSpanMd="6" />
+
+    <DxFormLayoutItem Field="@nameof(D_Salesorder_Select.Customer)" Caption="Customer:" ColSpanMd="6">
+        <Template>
+            <DxComboBox Data="@Customers"
+                        TextFieldName="@nameof(D_Dddw_Customer_Individual.Person_Firstname)"
+                        SelectedItem="@GetCustomer(context)"
+                        SelectedItemChanged="@(value => ((ValueEditingContext)context).OnChanged(new Nullable<decimal>(value.Customer_Customerid)))">
+            </DxComboBox>
+        </Template>
+    </DxFormLayoutItem>
+</DxFormLayout>
+
+@code {
+    [Parameter]
+    public D_Salesorder_Select Params { get; set; }
+    [Parameter]
+    public IDataStore<D_Dddw_Customer_Individual> Customers { get; set; }
+
+    void OnItemUpdating(string fieldName, object newValue)
+    {
+        switch (fieldName)
+        {
+            case nameof(D_Salesorder_Select.Customer):
+                Params.Customer = (decimal?)newValue;
+                break;
+            case nameof(D_Salesorder_Select.Date_From):
+                Params.Date_From = (DateTime?)newValue;
+                break;
+            case nameof(D_Salesorder_Select.Date_To):
+                Params.Date_To = (DateTime?)newValue;
+                break;
+        }
+    }
+
+    D_Dddw_Customer_Individual GetCustomer(object context)
+    {
+        if (Customers == null)
+            return null;
+
+        var result = Customers.Where(c => c.Customer_Customerid == Convert.ToInt32(((ValueEditingContext)context).Value)).FirstOrDefault();
+        return result;
+    }
+}
