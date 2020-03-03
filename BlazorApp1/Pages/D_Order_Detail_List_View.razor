@@ -1,7 +1,7 @@
 ﻿@using Appeon.DataStoreDemo.SqlServer;
 @using DWNet.Data;
 @using SnapObjects.Data;
-@inject IJSRuntime JsRuntime;
+@using System.ComponentModel.DataAnnotations;
 
 <DxDataGrid Data="@DataSource"
             RowUpdating="@OnRowUpdating"
@@ -35,16 +35,22 @@
 </DxDataGrid>
 
 @code {
-        DxDataGrid<D_Order_Detail_List_ViewModel> myGrid;
+    DxDataGrid<D_Order_Detail_List_ViewModel> myGrid;
     [Parameter]
     public IDataStore<D_Dddw_Order_Production> Products { get; set; }
 
     [Parameter]
     public IDataStore DW_Order_Details { get; set; }
 
+    protected override void OnInitialized()
+    {
+        PrepareData();
+    }
+
     List<D_Order_Detail_List_ViewModel> DataSource = new List<D_Order_Detail_List_ViewModel>();
 
-    protected override void OnParametersSet()
+
+    void PrepareData()
     {
         DataSource.Clear();
         for (int i = 0; i < DW_Order_Details.RowCount; i++)
@@ -54,7 +60,7 @@
                 Model = DW_Order_Details.GetModel<D_Order_Detail_List>(i),
                 Index = i,
                 Status = DW_Order_Details.GetRowStatus(i)
-            }); ;
+            });
         }
     }
 
@@ -121,6 +127,7 @@
                 dataItem.Status = ModelState.Deleted;
             }
             myGrid.Refresh();
+            //InvokeAsync(StateHasChanged);
         }
     }
 

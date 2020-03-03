@@ -5,6 +5,12 @@
 @using System.Text
 @inject HttpClient Http
 
+@if (Saving)
+{
+    <p>Saving...</p>
+    return;
+}
+
 <h3>SalesOrder_DetailView</h3>
 <D_Order_Header_Free_View DW_Master="@DW_Master" Customers="@Customers"/>
 @if (DW_Order_Details == null)
@@ -33,6 +39,7 @@ else
 
 
     IDataStore DW_Order_Details;
+    bool Saving;
 
     [Parameter]
     public EventCallback<MouseEventArgs> OnClickCallback { get; set; }
@@ -59,16 +66,33 @@ else
 
     async void OnSaveClick(MouseEventArgs args)
     {
+        Saving = true;
+        StateHasChanged();
+
         IDataPacker dataPacker = new DataPacker();
         dataPacker.AddDataStore("dw1", DW_Master, true);
         dataPacker.AddDataStore("dw2", DW_Order_Details, true);
         string json = dataPacker.GetTextString(DataFormat.Json);
         HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
         var respone = await Http.PostAsync("http://localhost:16561/api/SalesOrder/SaveSalesOrderAndDetail", content);
-        var msg = await respone.Content.ReadAsStringAsync();
+        
         respone.EnsureSuccessStatusCode();
 
-        await OnClickCallback.InvokeAsync(args);
+        var msg = await respone.Content.ReadAsStringAsync();
+
+        IDataUnpacker unPacker = new DataUnpacker(msg, DataFormat.Json);
+        string json2 = unPacker.GetValue<string>("SalesOrderHeader.SalesOrderDetail");
+        DW_Order_Details.Reset();
+        DW_Order_Details.ImportJsonByKey(json2);
+        DW_Order_Details.ResetUpdate();
+
+        json2 = unPacker.GetValue<string>("SalesOrderHeader");
+        DW_Master.Reset();
+        DW_Master.ImportJsonByKey(json2);
+        DW_Master.ResetUpdate();
+
+        Saving = false;
+        StateHasChanged();
     }
 
     async void OnDeleteClick(MouseEventArgs args)
