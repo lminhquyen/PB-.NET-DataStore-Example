@@ -2,6 +2,7 @@
 @using SnapObjects.Data;
 @using Appeon.DataStoreDemo.SqlServer;
 @using System.Net.Http
+@using System.Text
 @inject HttpClient Http
 
 <h3>SalesOrder_DetailView</h3>
@@ -17,10 +18,12 @@ else
 
 
 <DxButton Click="@OnBackClick" Text="Back"/>
+<button type="submit" @onclick="@OnSaveClick">Save</button>
+<button type="submit" @onclick="@OnDeleteClick">Delete</button>
 
 @code {
     [Parameter]
-    public D_Order_Header_Grid DW_Master { get; set; }
+    public IDataStore<D_Order_Header_Free> DW_Master { get; set; }
 
     [Parameter]
     public IDataStore<D_Dddw_Order_Production> Products { get; set; }
@@ -29,26 +32,62 @@ else
     public IDataStore<D_Dddw_Customer_Individual> Customers { get; set; }
 
 
-    IDataStore<D_Order_Detail_List> DW_Order_Details;
+    IDataStore DW_Order_Details;
 
     [Parameter]
     public EventCallback<MouseEventArgs> OnClickCallback { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        string salesOrderId = DW_Master.Salesorderid.ToString();
-        string customerId = DW_Master.Customerid.ToString();
+        string salesOrderId = DW_Master.FirstOrDefault().Salesorderid.ToString();
+        string customerId = DW_Master.FirstOrDefault().Customerid.ToString();
         var response = await Http.GetAsync($"http://localhost:16561/api/SalesOrder/RetrieveSaleOrderDetail/{salesOrderId}/{customerId}");
         response.EnsureSuccessStatusCode();
         string json = await response.Content.ReadAsStringAsync();
         IDataUnpacker unPacker = new DataUnpacker(json, DataFormat.Json);
-        DW_Order_Details = new DataStore<D_Order_Detail_List>();
+        DW_Order_Details = new DataStore(typeof(D_Order_Detail_List));
         string json2 = unPacker.GetValue<string>("SalesOrderDetail");
-        DW_Order_Details.ImportJson(json2);
+        DW_Order_Details.Reset();
+        DW_Order_Details.ImportJsonByKey(json2);
+        DW_Order_Details.ResetUpdate();
     }
 
     void OnBackClick(MouseEventArgs args)
     {
         OnClickCallback.InvokeAsync(args);
+    }
+
+    async void OnSaveClick(MouseEventArgs args)
+    {
+        IDataPacker dataPacker = new DataPacker();
+        dataPacker.AddDataStore("dw1", DW_Master, true);
+        dataPacker.AddDataStore("dw2", DW_Order_Details, true);
+        string json = dataPacker.GetTextString(DataFormat.Json);
+        HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
+        var respone = await Http.PostAsync("http://localhost:16561/api/SalesOrder/SaveSalesOrderAndDetail", content);
+        var msg = await respone.Content.ReadAsStringAsync();
+        respone.EnsureSuccessStatusCode();
+
+        await OnClickCallback.InvokeAsync(args);
+    }
+
+    async void OnDeleteClick(MouseEventArgs args)
+    {
+        IDataPacker dataPacker = new DataPacker();
+        dataPacker.AddValue("arm1", "SaleOrder");
+        dataPacker.AddValue("arm2", DW_Master.FirstOrDefault().Salesorderid);
+        string json = dataPacker.GetTextString(DataFormat.Json);
+
+        HttpRequestMessage request = new HttpRequestMessage
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json"),
+            Method = HttpMethod.Delete,
+            RequestUri = new Uri("http://localhost:16561/api/SalesOrder/DeleteSalesOrderByKey")
+        };
+        var respone = await Http.SendAsync(request);
+
+        respone.EnsureSuccessStatusCode();
+
+        await OnClickCallback.InvokeAsync(args);
     }
 }

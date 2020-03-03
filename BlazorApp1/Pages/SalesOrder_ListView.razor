@@ -24,7 +24,7 @@ else
         }
         else if (Orders != null)
         {
-            <D_Order_Header_Grid_View Orders="@Orders" Customers="@Customers" EditCallback="@((row) => { data = row; listMode = !listMode; })" />
+            <D_Order_Header_Grid_View Orders="@Orders" Customers="@Customers" EditCallback="@EditCallback" />
         }
     }
     else
@@ -36,15 +36,15 @@ else
 
 @code {
 
-    public IDataStore<D_Dddw_Customer_Individual> Customers { get; set; }
+    IDataStore<D_Dddw_Customer_Individual> Customers;
     IDataStore<D_Dddw_Order_Production> Products;
 
     IDataStore<D_Order_Header_Grid> Orders;
 
-    D_Salesorder_Select Params { get; set; }
+    D_Salesorder_Select Params;
 
     bool listMode = true;
-    D_Order_Header_Grid data;
+    IDataStore<D_Order_Header_Free> data;
     bool OrderLoading;
 
     protected override async Task OnInitializedAsync()
@@ -86,8 +86,22 @@ else
         string json2 = unPacker.GetValue<string>("SalesOrderHeader");
 
         Orders = new DataStore<D_Order_Header_Grid>();
-        Orders.ImportJson(json2);
+        Orders.ImportJsonByKey(json2);
+        Orders.ResetUpdate();
 
         OrderLoading = false;
+    }
+
+    private void EditCallback(D_Order_Header_Grid row)
+    {
+        IDataStore<D_Order_Header_Grid> dt1 = new DataStore<D_Order_Header_Grid>();
+        dt1.Add(row);
+
+        string json = dt1.ExportJson();
+        data = new DataStore<D_Order_Header_Free>();
+        data.ImportJsonByKey(json);
+        data.ResetUpdate();        
+
+        listMode = !listMode;
     }
 }

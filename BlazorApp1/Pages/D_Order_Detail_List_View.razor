@@ -1,8 +1,14 @@
 ﻿@using Appeon.DataStoreDemo.SqlServer;
 @using DWNet.Data;
+@using SnapObjects.Data;
+@using System.Reflection;
 
-<DxDataGrid Data="@DW_Order_Details">
-    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Salesorderid)" Caption="Id" />
+<DxDataGrid Data="@(DW_Order_Details.AsEnumerable<D_Order_Detail_List>())"
+            RowRemoving="@OnRowRemoving"
+            RowUpdating="@OnRowUpdating"
+            RowInserting="@OnRowInserting"
+            InitNewRow="@OnInitNewRow">
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Salesorderdetailid)" Caption="Id" />
     <DxDataGridComboBoxColumn Field="@nameof(D_Order_Detail_List.Productid)"
                               TextFieldName="@nameof(D_Dddw_Order_Production.Product_Name)"
                               ValueFieldName="@nameof(D_Dddw_Order_Production.Product_Productid)"
@@ -22,5 +28,70 @@
     public IDataStore<D_Dddw_Order_Production> Products { get; set; }
 
     [Parameter]
-    public IDataStore<D_Order_Detail_List> DW_Order_Details { get; set; }
+    public IDataStore DW_Order_Details { get; set; }
+    
+    void OnRowRemoving(D_Order_Detail_List dataItem) {
+        var index = FindIndex(dataItem);
+        DW_Order_Details.DeleteRow(index);
+        //StateHasChanged();
+    }
+
+    int FindIndex(D_Order_Detail_List dataItem)
+    {
+        if (dataItem.Salesorderdetailid > 0)
+            return DW_Order_Details.FindIndex<D_Order_Detail_List>(
+                x => x.Salesorderdetailid == dataItem.Salesorderdetailid);
+
+        return DW_Order_Details.FindIndex<D_Order_Detail_List>(
+                x => x.Modifieddate == dataItem.Modifieddate);
+    }
+
+    void OnRowUpdating(D_Order_Detail_List dataItem, IDictionary<string, object> newValue) {
+        int index = FindIndex(dataItem);
+
+        Copy(index, newValue);
+        //StateHasChanged();
+    }
+
+    void Copy(int index, IDictionary<string, object> newValue)
+    {
+        foreach (var key in newValue.Keys)
+            DW_Order_Details.SetItem(index, key, Convert(key, newValue[key]));
+    }
+
+    object Convert(string key, object value)
+    {
+        switch (key)
+        {
+            case nameof(D_Order_Detail_List.Orderqty):
+                return int.Parse((string)value);
+            case nameof(D_Order_Detail_List.Linetotal):
+                return decimal.Parse((string)value);
+            case nameof(D_Order_Detail_List.Productid):
+                return ((D_Dddw_Order_Production)value).Product_Productid;
+            case nameof(D_Order_Detail_List.Unitprice):
+                return decimal.Parse((string)value);
+            case nameof(D_Order_Detail_List.Unitpricediscount):
+                return decimal.Parse((string)value);
+
+        }
+        return value;
+    }
+
+    void OnRowInserting(IDictionary<string, object> newValue)
+    {
+        newValue.Add(nameof(D_Order_Detail_List.Specialofferid), 1);
+        int index = DW_Order_Details.RowCount;
+        DW_Order_Details.ImportJson(
+            Newtonsoft.Json.JsonConvert.SerializeObject(
+            new D_Order_Detail_List[] { new D_Order_Detail_List() }));
+        Copy(index, newValue);
+    }
+
+    Task OnInitNewRow(Dictionary<string, object> values)
+    {
+        values.Add(nameof(D_Order_Detail_List.Modifieddate), DateTime.Now);
+
+        return Task.CompletedTask;
+    }
 }
