@@ -1,0 +1,44 @@
+﻿@using Appeon.DataStoreDemo.SqlServer;
+@using DWNet.Data;
+@using SnapObjects.Data;
+@using System.ComponentModel.DataAnnotations;
+@using BlazorApp1.Controls
+
+<DataWindow_View DW_Order_Details="DW_Order_Details" TItem="D_Order_Detail_List"
+                    TViewModel="D_Order_Detail_List_ViewModel" Convert="Convert" OnInit="OnInit">
+
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Salesorderdetailid)" Caption="Id" />
+    <DxDataGridComboBoxColumn Field="@nameof(D_Order_Detail_List.Productid)"
+                                TextFieldName="@nameof(D_Dddw_Order_Production.Product_Name)"
+                                ValueFieldName="@nameof(D_Dddw_Order_Production.Product_Productid)"
+                                Caption="Product"
+                                Data="@Products" />
+    <DxDataGridSpinEditColumn  Field="@nameof(D_Order_Detail_List.Unitprice)" Caption="Unit Price" />
+    <DxDataGridSpinEditColumn Field="@nameof(D_Order_Detail_List.Orderqty)" Caption="Order Qty" />
+    <DxDataGridSpinEditColumn Field="@nameof(D_Order_Detail_List.Unitpricediscount)" Caption="Unit Price Discount" />
+    <DxDataGridColumn Field="@nameof(D_Order_Detail_List.Linetotal)" Caption="Line Total" />
+    <DxDataGridDateEditColumn Field="@nameof(D_Order_Detail_List.Modifieddate)" Caption="Modified Date" />
+
+</DataWindow_View>
+
+@code {
+    [Parameter]
+    public IDataStore<D_Dddw_Order_Production> Products { get; set; }
+
+    [Parameter]
+    public IDataStore<D_Order_Detail_List> DW_Order_Details { get; set; }
+
+    object Convert(string key, object value)
+    {
+        if (key == nameof(D_Order_Detail_List.Productid))
+        {
+            return ((D_Dddw_Order_Production)value).Product_Productid;
+        }
+        return value;
+    }
+    void OnInit(Dictionary<string, object> values)
+    {
+        values[nameof(D_Order_Detail_List_ViewModel.Specialofferid)] = 1;
+        values[nameof(D_Order_Detail_List_ViewModel.Modifieddate)] = DateTime.Now;
+    }
+}

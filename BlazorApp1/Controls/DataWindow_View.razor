@@ -1,0 +1,138 @@
+﻿@typeparam TItem
+@typeparam TViewModel
+
+@using Appeon.DataStoreDemo.SqlServer;
+@using DWNet.Data;
+@using SnapObjects.Data;
+@using System.ComponentModel.DataAnnotations;
+
+    <DxDataGrid Data="@DataSource"
+                RowUpdating="@OnRowUpdating"
+                RowInserting="@OnRowInserting"
+                InitNewRow="@OnInitNewRow"
+                @ref="myGrid">
+
+        <DxDataGridColumn Field="@nameof(DataWindow_ViewModel<TItem>.Index)" Caption="No." />
+        <DxDataGridColumn Field="@nameof(DataWindow_ViewModel<TItem>.Status)" Caption="Status" />
+
+        @ChildContent
+
+        <DxDataGridCommandColumn>
+            <CellTemplate>
+                <button type="submit"
+                        @onclick="@((args) => { myGrid.StartRowEdit(context); })"
+                        disabled="@Disabled((TViewModel)context)">
+                    Edit
+                </button>
+                <button type="submit"
+                        disabled="@Disabled((TViewModel)context)"
+                        @onclick="@((args) => { OnRowRemoving((TViewModel)context); })">
+                    Delete
+                </button>
+            </CellTemplate>
+        </DxDataGridCommandColumn>
+    </DxDataGrid>
+
+@code {
+    DxDataGrid<TViewModel> myGrid;
+
+    [Parameter]
+    public IDataStore<TItem> DW_Order_Details { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public Func<string, object, object> Convert { get; set; }
+
+    [Parameter]
+    public Action<Dictionary<string, object>> OnInit { get; set; }
+
+    protected override void OnInitialized()
+    {
+        PrepareData();
+    }
+
+    List<TViewModel> DataSource = new List<TViewModel>();
+
+
+    void PrepareData()
+    {
+        DataSource.Clear();
+        for (int i = 0; i < DW_Order_Details.Count; i++)
+        {
+            DataSource.Add(new TViewModel
+            {
+                Model = DW_Order_Details.ElementAt<TItem>(i),
+                Index = i,
+                Status = DW_Order_Details.GetRowStatus(i)
+            });
+        }
+    }
+
+
+
+    bool Disabled(TViewModel dataItem)
+    {
+        return dataItem.Status == ModelState.Deleted;
+    }
+
+    void OnRowRemoving(TViewModel dataItem)
+    {
+        if (dataItem.Status != ModelState.Deleted)
+        {
+            DW_Order_Details.RemoveAt(dataItem.Index);
+
+            if (dataItem.Status == ModelState.NewModified)
+            {
+                DataSource.Remove(dataItem);
+            }
+            else
+            {
+                dataItem.Index = -1;
+                dataItem.Status = ModelState.Deleted;
+            }
+            myGrid.Refresh();
+            //InvokeAsync(StateHasChanged);
+        }
+    }
+
+    void OnRowUpdating(TViewModel dataItem, IDictionary<string, object> newValue)
+    {
+        Copy(dataItem.Index, newValue);
+        dataItem.Model = DW_Order_Details.ElementAt<TItem>(dataItem.Index);
+        dataItem.Status = ModelState.Modified;
+        StateHasChanged();
+    }
+
+    void Copy(int index, IDictionary<string, object> newValue)
+    {
+        foreach (var key in newValue.Keys)
+            DW_Order_Details.SetItem(index, key, Convert(key, newValue[key]));
+    }
+
+    void OnRowInserting(IDictionary<string, object> newValue)
+    {
+        int index = DW_Order_Details.Count;
+        DW_Order_Details.ImportJson(
+            Newtonsoft.Json.JsonConvert.SerializeObject(
+            new TItem[] { new TItem() }));
+        Copy(index, newValue);
+        DataSource.Add(
+            new TViewModel
+            {
+                Model = DW_Order_Details.ElementAt<TItem>(index),
+                Index = index,
+                Status = ModelState.NewModified
+            });
+        StateHasChanged();
+    }
+
+    Task OnInitNewRow(Dictionary<string, object> values)
+    {
+        if (OnInit!=null)
+            OnInit(values);
+
+        return Task.CompletedTask;
+    }
+}

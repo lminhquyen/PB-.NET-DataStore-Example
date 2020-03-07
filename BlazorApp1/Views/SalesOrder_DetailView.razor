@@ -38,7 +38,7 @@ else
     public IDataStore<D_Dddw_Customer_Individual> Customers { get; set; }
 
 
-    IDataStore DW_Order_Details;
+    IDataStore<D_Order_Detail_List> DW_Order_Details;
     bool Saving;
 
     [Parameter]
@@ -52,7 +52,7 @@ else
         response.EnsureSuccessStatusCode();
         string json = await response.Content.ReadAsStringAsync();
         IDataUnpacker unPacker = new DataUnpacker(json, DataFormat.Json);
-        DW_Order_Details = new DataStore(typeof(D_Order_Detail_List));
+        DW_Order_Details = new DataStore<D_Order_Detail_List>();
         string json2 = unPacker.GetValue<string>("SalesOrderDetail");
         DW_Order_Details.Reset();
         DW_Order_Details.ImportJsonByKey(json2);
